@@ -508,7 +508,11 @@ public class RegistrationDto extends Observable {
         }
     }
 
-    public void setGeoLocation(double  longitude, double latitude) {
-        this.geoLocationDto = new GeoLocationDto(longitude, latitude);
+    public void setGeoLocation(Double longitude, Double latitude) {
+        if (longitude != null && latitude != null) {
+            this.geoLocationDto = new GeoLocationDto(longitude, latitude);
+        } else {
+            this.geoLocationDto = null;
+        }
     }
 }
