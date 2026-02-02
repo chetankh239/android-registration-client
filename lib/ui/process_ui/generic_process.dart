@@ -100,6 +100,25 @@ class _GenericProcessState extends State<GenericProcess>
       },
     ));
     _registrationScreenLoadedAudit();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _fetchLocation();
+    });
+  }
+
+  bool _locationFetched = false;
+
+  Future<void> _fetchLocation() async {
+    if (_locationFetched) return;
+    _locationFetched = true;
+
+    Position? position = await globalProvider.fetchLocation();
+    if (position != null) {
+      globalProvider.getAudit("REG-GEO-LOC-001", "REG-MOD-103");
+      registrationTaskProvider.setCurrentLocation(position.latitude, position.longitude);
+    } else {
+      debugPrint("Location unavailable — permission denied or service off.");
+      globalProvider.getAudit("REG-GEO-LOC-002", "REG-MOD-103");
+    }
   }
 
   @override
@@ -208,7 +227,7 @@ class _GenericProcessState extends State<GenericProcess>
   }
 
   _nextButtonClickedAudit() async {
-    await globalProvider.getAudit("REG-EVT-003", "REG-MOD-103");
+    await globalProvider.getAudit("REG-EVT-069", "REG-MOD-103");
   }
 
   setScrollToTop() {
@@ -633,9 +652,11 @@ class _GenericProcessState extends State<GenericProcess>
       }
 
       if (globalProvider.newProcessTabIndex < size) {
-        await ageDateChangeValidation(globalProvider.newProcessTabIndex, process, size);
+        await ageDateChangeValidation(
+            globalProvider.newProcessTabIndex, process, size);
         bool customValidator =
-            await customValidation(globalProvider.newProcessTabIndex, process, size);
+        await customValidation(
+            globalProvider.newProcessTabIndex, process, size);
         if (customValidator) {
           if (globalProvider.formKey.currentState!.validate()) {
             // Additional info validation - prevent navigation if required but not filled

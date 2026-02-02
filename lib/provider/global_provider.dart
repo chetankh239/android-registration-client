@@ -930,6 +930,10 @@ class GlobalProvider with ChangeNotifier {
     // Check and request permission
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      audit.performAudit(
+        "REG-NAV-005",
+        "REG-MOD-102",
+      );
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         // Permissions still denied
