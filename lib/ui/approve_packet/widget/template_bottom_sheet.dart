@@ -145,7 +145,7 @@ class TemplateBottomSheet {
                                   onPressed: reviewStatus == ReviewStatus.APPROVED.name
                                       ? null
                                       : () {
-                                    globalProvider.getAudit("REG-EVT-067", "REG-MOD-103");
+                                    globalProvider.getAudit("PACKET_APPROVED", "REG-MOD-103");
                                     context
                                         .read<ApprovePacketsProvider>()
                                         .approvePacket(regCurrent.packetId);
@@ -183,7 +183,7 @@ class TemplateBottomSheet {
                                   onPressed: reviewStatus == ReviewStatus.REJECTED.name
                                       ? null
                                       : () {
-                                    globalProvider.getAudit("REG-EVT-068", "REG-MOD-103");
+                                    globalProvider.getAudit("PACKET_REJECTED", "REG-MOD-103");
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
