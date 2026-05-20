@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -26,7 +25,6 @@ public class RegistrationDeletionJobTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
         registrationDeletionJob.packetService = packetService;
     }
 

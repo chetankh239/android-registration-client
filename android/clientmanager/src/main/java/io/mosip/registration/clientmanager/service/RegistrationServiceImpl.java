@@ -202,7 +202,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
         this.registrationDto = new RegistrationDto(rid, flowType, process, version, languages, bioThresholds, rid);
 
-        if (latitude != null && longitude != null) {
+        if ((latitude == null) != (longitude == null)) {
+            throw new IllegalArgumentException("Latitude and longitude must be provided together");
+        }
+        if (latitude != null) {
             this.registrationDto.setGeoLocation(longitude, latitude);
             try {
                 preCheckValidatorService.validateCenterToMachineDistance(longitude, latitude);
