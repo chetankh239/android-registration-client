@@ -56,7 +56,9 @@ whenever files under `pigeon/` change):
 sh pigeon.sh
 ```
 
-Generate localization data after adding/editing files under `lib/l10n`:
+Generate localization data after adding/editing files under
+`assets/l10n` (the actual ARB source directory, per `l10n.yaml` — not
+`lib/l10n`, which doesn't exist in this repo):
 
 ```bash
 flutter gen-l10n
@@ -157,7 +159,7 @@ java -jar uitest-regclient-1.0.0.jar
 
 - `lib/` — Flutter/Dart application code (`main.dart`, `app_router.dart`,
   `model/`, `platform_android/`, `platform_spi/`, `provider/`, `ui/`,
-  `utils/`).
+  `utils/`) — see [`lib/AGENTS.md`](lib/AGENTS.md) for detail.
 - `pigeon/` and `pigeon.sh` — Pigeon message definitions and the codegen
   script that produces `lib/pigeon/*.dart` and the matching generated Java
   classes under
@@ -166,7 +168,9 @@ java -jar uitest-regclient-1.0.0.jar
   locally rather than hand-editing generated files.
 - `android/` — the Flutter Android embedding project, plus native library
   modules declared in `android/settings.gradle`: `app`, `clientmanager`,
-  `keymanager`, `packetmanager`, `transliterationmanager`.
+  `keymanager`, `packetmanager`, `transliterationmanager` — see
+  [`android/AGENTS.md`](android/AGENTS.md) and each module's own
+  `AGENTS.md` for detail.
 - `ios/`, `windows/`, `linux/`, `macos/`, `web/` — other Flutter platform
   targets present in the tree; this AGENTS.md focuses on the Android path
   since that is the repository's primary purpose.
@@ -204,7 +208,7 @@ java -jar uitest-regclient-1.0.0.jar
   commit only the intended source changes — generated output paths listed in
   `.gitignore` (`/lib/pigeon/`, the Android Pigeon model package, iOS Pigeon
   files) should stay untracked.
-- If you add localization strings under `lib/l10n`, run `flutter gen-l10n`
+- If you add localization strings under `assets/l10n`, run `flutter gen-l10n`
   before testing UI changes that use them.
 - Styling/theme lives in `lib/utils/app_style.dart` and
   `lib/utils/app_config.dart`; app label/icon are set in
@@ -245,6 +249,11 @@ java -jar uitest-regclient-1.0.0.jar
   that is not present in this repo's tracked tree (see Project Structure
   Notes above) — treat any instructions or automation based on those two
   workflows with caution until that mismatch is resolved upstream.
+- **`android/build.gradle` has what looks like a real, committed
+  SonarCloud token** (`sonar.login`) — see
+  [`android/AGENTS.md`](android/AGENTS.md) for detail. Treat it as
+  compromised (public repo); don't add another real token anywhere in
+  this repo following that pattern.
 - The Mock MDS (Mock Device Service) app, used to simulate biometric
   hardware for testing, is a separate MOSIP project
   (`mosip/android-camera-mds`) — see `README.md`'s "Set up Mock MDS for
