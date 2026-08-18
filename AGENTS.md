@@ -143,17 +143,27 @@ java -jar uitest-regclient-1.0.0.jar
   respectively — real key material never lives in the repo or in tracked
   config files. When working locally, create these files yourself with your
   own dev keystore and never commit them.
-- **SonarQube properties**: `android/build.gradle`'s `sonarqube {}` block
-  contains placeholder strings (`your-sonar-project-key`,
-  `your-sonar-organization`, `your-sonar-token`) — these are examples, not
-  real credentials. `push_trigger.yml` shows the actual mechanism: a
-  `sed` replacement of a snapshot token pattern in `*gradle.properties` files,
-  sourced from the `SONAR_TOKEN` GitHub Actions secret. Do not hand-edit a
-  real Sonar token into `android/build.gradle`.
-- **Debug password**: `android/build.gradle` sets a literal placeholder
-  `debugPassword = "\"your-debug-password\""`. Treat this the same way — a
-  placeholder to override via build config, not a value to replace with a
-  real secret in a tracked file.
+- **SonarQube properties (committed secret)**: `android/build.gradle`'s
+  `sonarqube {}` block contains real, committed values — not placeholders:
+  `sonar.projectKey "rajapandi1234_android-registration-client"`,
+  `sonar.organization "test-integrations"`, and a hardcoded
+  `sonar.login "13c9437b…"` that looks like a live SonarCloud token. Since
+  this is a public repo, treat that token as compromised: it should be
+  rotated by its owner and replaced with a CI secret, not left in a tracked
+  file (see [`android/AGENTS.md`](android/AGENTS.md) for the same warning).
+  The same block also embeds a contributor's personal Windows path in
+  `sonar.coverage.jacoco.xmlReportPaths`. Note that the only token
+  substitution in CI is in `build_client.yml`, which `sed`s the unrelated
+  pattern `sqp_19c9702e…` in `*gradle.properties` files using the
+  `SONAR_TOKEN` secret — that pattern does not appear anywhere in the
+  current tree, so it does not cover the token in `android/build.gradle`.
+  Never add another real token to a tracked file following this pattern.
+- **Debug password (committed secret)**: `android/build.gradle` sets a real
+  literal value, `debugPassword = "\"APTyKej…\""`, consumed as
+  the `DEBUG_PASSWORD` `buildConfigField` in
+  `android/clientmanager/build.gradle`. Treat this the same way as the Sonar
+  token — a committed secret that should be rotated and moved to a CI
+  secret or a local, untracked properties file, not a placeholder.
 
 ## Project Structure Notes
 
@@ -216,23 +226,26 @@ java -jar uitest-regclient-1.0.0.jar
 
 ## Pull Request Guidelines
 
-- Sign off commits (Developer Certificate of Origin) — `use-pr-linker.yml`
-  and the DCO check in `push_trigger.yml` both enforce this; use
-  `git commit -s`.
-- Reference the tracking issue in the PR description/commit body; MOSIP's
-  PR-linker workflow (`use-pr-linker.yml`, calling
-  `mosip/kattu/.github/workflows/link-pr-to-issue.yml`) links PRs to issues
-  automatically when the issue is referenced.
+- Sign off commits (Developer Certificate of Origin) — the `dco-check` job
+  in `.github/workflows/push_trigger.yml` enforces this — it gates the rest
+  of that workflow, which runs as a chain (`codeql` needs `dco-check`,
+  `prebuild` needs `codeql`, `build-apk` needs `prebuild`), so a missing
+  sign-off blocks the whole build; use `git commit -s`.
+- Reference the tracking issue in the PR description/commit body. Note that
+  this repo has no PR-linker workflow of its own — `.github/workflows/`
+  contains only `build_client.yml`, `build-android.yml`, and
+  `push_trigger.yml` — so linking is by convention, not automation here.
 - Follow the general MOSIP contribution guide linked from `README.md`:
   <https://docs.mosip.io/1.2.0/community/code-contributions>.
 - Keep generated files (Pigeon output, Freezed/`*.g.dart` model files) out of
   PRs unless the PR is specifically about regenerating them — they are
   git-ignored for a reason.
 - Do not commit `android/local.properties`, `android/key.properties`, or any
-  `.jks` keystore file, even though `.gitignore` does not list
-  `android/key.properties` or the keystore filename explicitly by path —
-  these are populated only via CI secrets or a developer's own local, private
-  files and must never enter version control.
+  keystore file. `android/.gitignore` already covers all of these
+  (`/local.properties`, `key.properties`, `**/*.keystore`, `**/*.jks`), so
+  never force-add them past that ignore rule — they are populated only via CI
+  secrets or a developer's own local, private files and must never enter
+  version control.
 
 ## Repository-Specific Considerations
 

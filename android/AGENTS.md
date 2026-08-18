@@ -56,9 +56,10 @@ one `ext {}` block — module `build.gradle` files reference
 `rootProject.ext.*` rather than hardcoding versions. Includes AGP `8.3.2`,
 Kotlin `1.9.24`, `compileSdk`/`targetSdk` 34, `minSdk` 28,
 `serverBaseURL`/`serverHealthCheckPath`/`serverActuatorInfoPath` (see
-root `AGENTS.md`'s Configuration section), a hardcoded placeholder
-`debugPassword`, and ~50 dependency version properties (Dagger,
-OkHttp/Retrofit, Jackson, BouncyCastle, jose4j, SQLCipher, PDFBox, ICU4J,
+root `AGENTS.md`'s Configuration section), a hardcoded real
+`debugPassword` (a committed secret — see the security note below), and
+~50 dependency version properties (Dagger, OkHttp/Retrofit, Jackson,
+BouncyCastle, jose4j, SQLCipher, PDFBox, ICU4J,
 `biometrics-util`, `kernel-biometrics-api`, etc.).
 
 Other things it does:
@@ -85,10 +86,12 @@ SonarQube block (`property "sonar.login", "..."`) has what looks like a
 **real SonarCloud token** hardcoded and committed, alongside a
 contributor's personal Windows path
 (`C:\Users\sachin.sp\AndroidStudioProjects\...`) in the Jacoco report
-paths. Since this is a public repo, treat that token as compromised —
-it should be rotated by whoever owns it and replaced with a CI
-secret/environment variable, not left in a tracked file. Do not add
-another real token anywhere in this repo following that pattern.
+paths. The `ext` block's `debugPassword` is likewise a real value
+(`"\"APTyKej…\""`), not a placeholder — it feeds `clientmanager`'s
+`DEBUG_PASSWORD` `buildConfigField`. Since this is a public repo, treat both as
+compromised — they should be rotated by whoever owns them and replaced
+with CI secrets/environment variables, not left in a tracked file. Do not
+add another real secret anywhere in this repo following that pattern.
 
 ## `android/settings.gradle`
 
