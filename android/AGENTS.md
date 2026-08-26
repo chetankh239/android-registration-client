@@ -49,12 +49,12 @@ Centralizes almost every version number in one `ext {}` block — module
 `build.gradle` files reference `rootProject.ext.*` rather than
 hardcoding. Includes AGP `8.3.2`, Kotlin `1.9.24`, `compileSdk`/
 `targetSdk` 34, `minSdk` 28, `serverBaseURL`/`serverHealthCheckPath`/
-`serverActuatorInfoPath` (see root `AGENTS.md`), a committed-secret
-`debugPassword` (see root `AGENTS.md`'s Configuration for the full
-warning — do not re-add or extend this pattern), and ~50 dependency
-version properties (Dagger, OkHttp/Retrofit, Jackson, BouncyCastle,
-jose4j, SQLCipher, PDFBox, ICU4J, `biometrics-util`,
-`kernel-biometrics-api`, etc.).
+`serverActuatorInfoPath` (see root `AGENTS.md`), an env-var-backed
+`debugPassword` (see root `AGENTS.md`'s Configuration — do not
+hardcode a real value here again), and ~50 dependency version
+properties (Dagger, OkHttp/Retrofit, Jackson, BouncyCastle, jose4j,
+SQLCipher, PDFBox, ICU4J, `biometrics-util`, `kernel-biometrics-api`,
+etc.).
 
 Also: auto-detects `android.namespace` for `com.android.library`
 subprojects missing one (AGP-8 shim for vendored Flutter plugins);
@@ -140,10 +140,7 @@ Per-module unit tests (only the 4 manager modules apply the shared
 
 ### Do not
 
-1. Do not treat the SonarQube token in `android/build.gradle` as safe to
-   reuse or extend — it's a known, pre-existing exposure (see above),
-   not a pattern to copy for new CI config.
-2. Do not assume `./gradlew` exists in a fresh checkout — it's gitignored.
-3. Do not add Pigeon references inside `clientmanager`, `keymanager`,
+1. Do not assume `./gradlew` exists in a fresh checkout — it's gitignored.
+2. Do not add Pigeon references inside `clientmanager`, `keymanager`,
    `packetmanager`, or `transliterationmanager` — none of them use
    Pigeon today, and the bridge layer belongs in `android/app`.
