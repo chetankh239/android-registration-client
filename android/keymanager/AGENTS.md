@@ -44,9 +44,8 @@ No `src/androidTest`, no module-level README.
 - **`CryptoManagerService`** — implemented by
   `service/CryptoManagerServiceImpl.java`.
 
-**No Pigeon references anywhere in this module.** Pigeon `HostApi`
-implementations live in `android/app`'s `api_services/` — see
-`../AGENTS.md`.
+No Pigeon references in this module — `HostApi` impls live in
+`android/app`'s `api_services/` (see `../AGENTS.md`).
 
 ## Build & Test Commands
 

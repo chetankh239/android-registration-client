@@ -51,33 +51,22 @@ No module-level README.
   `PreRegistrationDataSyncService`, `LocationValidationService`,
   `CenterRemapService`.
 
-**No Pigeon references anywhere in this module.** The Flutter-facing
-`HostApi` implementations that call into these `spi` interfaces live in
-`android/app/src/main/java/io/mosip/registration_client/api_services/`
-— see `../AGENTS.md`. If you're adding a new capability that Flutter
-needs to call, the `spi` interface + impl goes here; the Pigeon glue
-goes in `android/app`.
+No Pigeon references in this module — Flutter-facing `HostApi` impls
+that call these `spi` interfaces live in `android/app`'s
+`api_services/` (see `../AGENTS.md`). New Flutter-callable capability:
+`spi` interface + impl here, Pigeon glue in `android/app`.
 
 ## The `dexifyBiosdkAars` task
 
-`build.gradle` defines a custom task, `dexifyBiosdkAars`: it scans
-`src/main/assets/biosdk/*.aar`, extracts each `classes.jar`, and runs
-Google's R8 `D8` compiler (added via a custom `dexify` configuration) to
-convert it to a DEX-format jar under `build/biosdk-dex/biosdk`, so a
-`BioSDKLoader` can `DexClassLoader` it at runtime instead of it being a
-normal compile-time dependency. This task:
-
-- Is wired to run before `mergeDebugAssets`/`mergeReleaseAssets` in
-  **this** module.
-- Is *also* wired (from `android/app/build.gradle`'s `afterEvaluate`
-  block) to run before the **app** module's asset merge — so a change
-  here that breaks this task will surface as an `app`-module build
-  failure, not a `clientmanager` one. See `../AGENTS.md`.
-- Skips re-conversion if the vendor already ships a DEX-format
-  `classes.jar` (no AAR-to-DEX step needed), or if the output jar is
-  already up to date.
-
-Don't touch this task without understanding both wiring points.
+`build.gradle`'s custom `dexifyBiosdkAars` task scans
+`src/main/assets/biosdk/*.aar`, extracts `classes.jar`, and runs R8
+`D8` to convert it to DEX under `build/biosdk-dex/biosdk` so
+`BioSDKLoader` can `DexClassLoader` it at runtime instead of a normal
+compile-time dependency. Skips re-conversion if already DEX-format or
+up to date. Wired to run before asset-merge **both** here and (via
+`android/app/build.gradle`'s `afterEvaluate`) in `app` — a break here
+surfaces as an `app`-module build failure (see `../AGENTS.md`). Don't
+touch this task without understanding both wiring points.
 
 ## Build & Test Commands
 

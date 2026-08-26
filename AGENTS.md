@@ -2,306 +2,183 @@
 
 ## Repository Overview
 
-`android-registration-client` (repo short name: **ARC**) is the MOSIP Registration
-Client packaged as a tablet/Android app. It is a portable, Flutter-based version
-of the desktop [`registration-client`](https://github.com/mosip/registration-client),
-built to run on Android devices in the field.
+`android-registration-client` (repo short name: **ARC**) is the MOSIP
+Registration Client packaged as a tablet/Android app — a portable,
+Flutter-based version of the desktop
+[`registration-client`](https://github.com/mosip/registration-client).
 
-The app is a **Flutter application** (Dart UI code in `lib/`) with a set of
-**native Android library modules** under `android/` (`clientmanager`,
-`keymanager`, `packetmanager`, `transliterationmanager`) that implement the
-device-facing logic (biometric SDK integration, key management, packet
-creation, transliteration). Flutter talks to these native modules through
-generated [Pigeon](https://pub.dev/packages/pigeon) bridge code.
+The app is a **Flutter application** (Dart UI in `lib/`) plus **native
+Android library modules** under `android/` (`clientmanager`, `keymanager`,
+`packetmanager`, `transliterationmanager`) for device-facing logic
+(biometric SDK integration, key management, packet creation,
+transliteration). Flutter talks to these modules through generated
+[Pigeon](https://pub.dev/packages/pigeon) bridge code.
 
-A separate Maven/Appium UI automation project lives in `ui-test/` — it already
-has its own `ui-test/README.md`; see that file for automation-specific setup
-instead of duplicating it here.
+`ui-test/` is a separate Maven/Appium UI automation project with its own
+`ui-test/README.md` — use that for automation setup, not this file.
 
 ## Technology Stack
 
 - **App/UI**: Flutter/Dart, `pubspec.yaml` pins `sdk: ">=2.19.6 <3.0.0"`,
-  Flutter SDK `3.10.4` per `README.md`. Note: Flutter 3.10.x ships with Dart
-  3.0.x, which is above the `<3.0.0` upper bound declared in `pubspec.yaml` —
-  this is a pre-existing inconsistency in the repo, not a typo here. Use a
-  Dart-2-era Flutter SDK to satisfy the declared constraint, or expect to
-  raise it if installing Flutter 3.10.4.
-- **Native Android modules**: Kotlin/Java, Gradle (Android Gradle Plugin
-  `8.3.2`, Kotlin `1.9.24`, `compileSdkVersion`/`targetSdkVersion` 34,
-  `minSdkVersion` 28) — see `android/build.gradle` and `android/app/build.gradle`.
-- **JDK**: Java 21 (`compileOptions` in `android/app/build.gradle`; CI uses
+  Flutter SDK `3.10.4` per `README.md`. Flutter 3.10.x ships Dart 3.0.x,
+  above that `<3.0.0` bound — a pre-existing repo inconsistency, not a
+  typo here. Use a Dart-2-era Flutter SDK to satisfy the constraint, or
+  expect to raise it if installing 3.10.4.
+- **Native Android modules**: Kotlin/Java, Gradle (AGP `8.3.2`, Kotlin
+  `1.9.24`, `compileSdkVersion`/`targetSdkVersion` 34, `minSdkVersion`
+  28) — see `android/build.gradle` and `android/app/build.gradle`.
+- **JDK**: Java 21 (`android/app/build.gradle`'s `compileOptions`; CI uses
   `zulu` 21 via `actions/setup-java`).
-- **Code generation**: Pigeon (Flutter-to-native bridge), `build_runner` /
-  `freezed` / `json_serializable` for Dart model codegen — all driven by
+- **Code generation**: Pigeon (Flutter↔native bridge), `build_runner` /
+  `freezed` / `json_serializable` for Dart models — all driven by
   `pigeon.sh`.
-- **UI automation**: Java + Maven + Appium + TestNG, in `ui-test/` (see its
-  own README).
-- **Quality tooling referenced in the tree**: Jacoco (code coverage) and a
-  SonarQube/SonarCloud Gradle plugin, both wired in `android/build.gradle`.
+- **UI automation**: Java + Maven + Appium + TestNG, in `ui-test/`.
+- **Quality tooling**: Jacoco + a SonarQube/SonarCloud Gradle plugin,
+  both wired in `android/build.gradle`.
 
 ## Build & Test Commands
 
-Run these from the repository root unless noted otherwise.
-
-Install Dart/Flutter dependencies:
-
 ```bash
-flutter pub get
+flutter pub get                    # install Dart/Flutter deps
+sh pigeon.sh                       # regenerate Pigeon bridge + Dart models
+                                    #   (required after cloning and whenever pigeon/ changes)
+flutter gen-l10n                   # regenerate l10n after editing assets/l10n (per l10n.yaml, not lib/l10n)
+flutter run                        # run on a connected device/emulator
+flutter test                       # Dart unit/widget tests
+flutter build apk --debug          # debug APK
+flutter build apk --release        # release APK
+(cd android && ./gradlew assembleDebug)   # native Android modules only
 ```
 
-Generate the Pigeon bridge code and Dart models (required after cloning, and
-whenever files under `pigeon/` change):
-
-```bash
-sh pigeon.sh
-```
-
-Generate localization data after adding/editing files under
-`assets/l10n` (the actual ARB source directory, per `l10n.yaml` — not
-`lib/l10n`, which doesn't exist in this repo):
-
-```bash
-flutter gen-l10n
-```
-
-Run the app on a connected device or emulator:
-
-```bash
-flutter run
-```
-
-Run Flutter (Dart) unit/widget tests:
-
-```bash
-flutter test
-```
-
-Build an APK:
-
-```bash
-# Debug APK
-flutter build apk --debug
-
-# Release APK
-flutter build apk --release
-```
-
-Build only the native Android modules with Gradle (from `android/`):
-
-```bash
-cd android
-./gradlew assembleDebug
-```
-
-Build the UI automation project (Maven, from `ui-test/`), without running
-tests — see `ui-test/README.md` for the full Appium/emulator/Mock-MDS setup
-needed before running them:
+UI automation (Maven, from `ui-test/` — see `ui-test/README.md` for the
+full Appium/emulator/Mock-MDS setup before running tests):
 
 ```bash
 cd ui-test
-mvn clean package -DskipTests=true
-```
-
-This produces `target/uitest-regclient-1.0.0.jar`. Run the tests themselves
-from that JAR (or via the TestNG suite from an IDE):
-
-```bash
-cd ui-test/target
-java -jar uitest-regclient-1.0.0.jar
+mvn clean package -DskipTests=true      # produces target/uitest-regclient-1.0.0.jar
+cd target && java -jar uitest-regclient-1.0.0.jar   # run tests
 ```
 
 ## Configuration
 
-- **Backend base URL**: `android/build.gradle` defines
-  `serverBaseURL = "\"https://api-internal.sandbox.xyz.net\""` (plus
-  `serverHealthCheckPath` and `serverActuatorInfoPath`), consumed as
-  `BuildConfig` fields in `android/app/build.gradle`. This is a MOSIP sandbox
-  placeholder value in the repo — do not treat it as a real, always-available
-  environment, and do not hardcode a different real environment's URL into
-  tracked files. The `build-android.yml` and `push_trigger.yml` workflows both
-  substitute this value at build time via `sed`, driven by a
-  `serverBaseURL`/`defaultServerBaseURL` workflow input — that is the
-  supported way to point a build at a different backend, not editing
-  `build.gradle` directly.
-- **Flutter SDK path**: `android/local.properties` (not committed — create it
+- **Backend base URL**: `android/build.gradle`'s `serverBaseURL`
+  (`"https://api-internal.sandbox.xyz.net"`, plus
+  `serverHealthCheckPath`/`serverActuatorInfoPath`) feeds `BuildConfig`
+  fields in `android/app/build.gradle`. It's a sandbox placeholder —
+  don't hardcode a different real environment here. `build-android.yml`
+  and `push_trigger.yml` override it at build time via `sed`, driven by
+  a `serverBaseURL`/`defaultServerBaseURL` workflow input — that's the
+  supported override path.
+- **Flutter SDK path**: `android/local.properties` (untracked — create
   locally, or let Android Studio's Flutter plugin generate it) must set
-  `flutter.sdk=your-flutter-sdk-path`. `android/settings.gradle` asserts
-  this file exists and that the property is set.
+  `flutter.sdk=...`; `android/settings.gradle` asserts this.
 - **Android app signing**: `android/app/build.gradle` reads
-  `key.properties` (via `android/key.properties`, if present) for
-  `keyAlias`, `keyPassword`, `storeFile`, `storePassword`. If that file is
-  absent, the release build type silently falls back to the debug signing
-  config (`signingConfig localProperties['storeFile'] ? signingConfigs.release
-  : signingConfigs.debug`) instead of failing — do not rely on this fallback
-  to produce a properly-signed release artifact; always confirm
-  `android/key.properties` and the keystore are present before a release
-  build. Neither `android/key.properties` nor a keystore
-  `.jks` file is tracked in this repository. In CI (`build-android.yml`), both
-  are produced at build time by base64-decoding the `JKS_PRIVATE_SECRET` and
-  `KEY_PROPERTIES` GitHub Actions secrets into
-  `android/app/arc-local-keystore.jks` and `android/key.properties`
-  respectively — real key material never lives in the repo or in tracked
-  config files. When working locally, create these files yourself with your
-  own dev keystore and never commit them.
-- **SonarQube properties (committed secret)**: `android/build.gradle`'s
-  `sonarqube {}` block contains real, committed values — not placeholders:
-  `sonar.projectKey "rajapandi1234_android-registration-client"`,
-  `sonar.organization "test-integrations"`, and a hardcoded
-  `sonar.login "13c9437b…"` that looks like a live SonarCloud token. Since
-  this is a public repo, treat that token as compromised: it should be
-  rotated by its owner and replaced with a CI secret, not left in a tracked
-  file (see [`android/AGENTS.md`](android/AGENTS.md) for the same warning).
-  The same block also embeds a contributor's personal Windows path in
-  `sonar.coverage.jacoco.xmlReportPaths`. Note that the only token
-  substitution in CI is in `build_client.yml`, which `sed`s the unrelated
-  pattern `sqp_19c9702e…` in `*gradle.properties` files using the
-  `SONAR_TOKEN` secret — that pattern does not appear anywhere in the
-  current tree, so it does not cover the token in `android/build.gradle`.
-  Never add another real token to a tracked file following this pattern.
-- **Debug password (committed secret)**: `android/build.gradle` sets a real
-  literal value, `debugPassword = "\"APTyKej…\""`, consumed as
-  the `DEBUG_PASSWORD` `buildConfigField` in
-  `android/clientmanager/build.gradle`. Treat this the same way as the Sonar
-  token — a committed secret that should be rotated and moved to a CI
-  secret or a local, untracked properties file, not a placeholder.
+  `android/key.properties` (`keyAlias`, `keyPassword`, `storeFile`,
+  `storePassword`) if present; if absent, the release build type
+  **silently falls back to debug signing** instead of failing — always
+  confirm `key.properties` + keystore exist before a release build.
+  Neither is tracked. In CI (`build-android.yml`) both are produced at
+  build time from the `JKS_PRIVATE_SECRET`/`KEY_PROPERTIES` secrets into
+  `android/app/arc-local-keystore.jks` and `android/key.properties`.
+  Locally, create your own dev keystore and never commit it.
+- **Committed secrets (unresolved)**: `android/build.gradle`'s
+  `sonarqube {}` block has a real, live-looking `sonar.login` token and
+  a contributor's personal Windows path in
+  `sonar.coverage.jacoco.xmlReportPaths`; it also sets a real
+  `debugPassword` (consumed by `android/clientmanager/build.gradle`'s
+  `DEBUG_PASSWORD` field). Both are committed secrets in a public
+  repo — treat as compromised, do not extend the pattern. CI's only
+  token substitution (`build_client.yml` `sed`s `sqp_19c9702e…` in
+  `*gradle.properties`) does **not** cover either of these — that
+  pattern doesn't exist in the tree. See `android/AGENTS.md` — removing
+  them requires a maintainer/deployment-owner decision (CI secret vs.
+  local file), not a drive-by fix.
 
 ## Project Structure Notes
 
-- `lib/` — Flutter/Dart application code (`main.dart`, `app_router.dart`,
-  `model/`, `platform_android/`, `platform_spi/`, `provider/`, `ui/`,
-  `utils/`) — see [`lib/AGENTS.md`](lib/AGENTS.md) for detail.
-- `pigeon/` and `pigeon.sh` — Pigeon message definitions and the codegen
-  script that produces `lib/pigeon/*.dart` and the matching generated Java
-  classes under
+- `lib/` — Flutter/Dart app code; see [`lib/AGENTS.md`](lib/AGENTS.md).
+- `pigeon/` / `pigeon.sh` — Pigeon defs + codegen script producing
+  `lib/pigeon/*.dart` and Java classes under
   `android/app/src/main/java/io/mosip/registration_client/model/`.
-  Generated output is git-ignored (see `.gitignore`) — always regenerate
-  locally rather than hand-editing generated files.
-- `android/` — the Flutter Android embedding project, plus native library
-  modules declared in `android/settings.gradle`: `app`, `clientmanager`,
-  `keymanager`, `packetmanager`, `transliterationmanager` — see
-  [`android/AGENTS.md`](android/AGENTS.md) and each module's own
-  `AGENTS.md` for detail.
-- `ios/`, `windows/`, `linux/`, `macos/`, `web/` — other Flutter platform
-  targets present in the tree; this AGENTS.md focuses on the Android path
-  since that is the repository's primary purpose.
-- `test/` — Dart unit/widget tests (e.g. `login_test.dart`,
-  `machine_details_test.dart`).
-- `ui-test/` — separate Maven-based Appium/TestNG UI automation project with
-  its own `README.md` and `pom.xml`; not part of the Flutter/Gradle build.
-- `docs/` — flow diagrams (PNG) documenting app screens/flows, plus a
-  `design/` subfolder.
-- `assets/` — app images, SVGs, and localization bundles referenced from
+  Generated output is git-ignored — always regenerate, never hand-edit.
+- `android/` — Flutter Android embedding + native modules (`app`,
+  `clientmanager`, `keymanager`, `packetmanager`,
+  `transliterationmanager`, per `android/settings.gradle`) — see
+  [`android/AGENTS.md`](android/AGENTS.md) and each module's own guide.
+- `ios/`, `windows/`, `linux/`, `macos/`, `web/` — other Flutter targets
+  present but out of scope here (Android is primary).
+- `test/` — Dart unit/widget tests. `ui-test/` — separate Maven/Appium
+  project, not part of the Flutter/Gradle build. `docs/` — flow-diagram
+  PNGs. `assets/` — images/SVGs/localization referenced from
   `pubspec.yaml`.
-- **CI workflow note**: `.github/workflows/build_client.yml` and
-  `.github/workflows/push_trigger.yml` both `cd client` and run
-  `./gradlew ...` from a `client/` directory. No `client/` directory exists
-  anywhere in this repository's tracked tree (confirmed via
-  `git ls-tree -r HEAD`), so as written these two workflows do not match the
-  current repo layout. `.github/workflows/build-android.yml` is the workflow
-  that matches the actual tree — it runs `flutter build apk` from the repo
-  root after `pigeon.sh` codegen. Do not assume `build_client.yml` or
-  `push_trigger.yml` describe a working build path; verify against the
-  current tree before relying on them, and do not "fix" this by inventing a
-  `client/` directory unless you have confirmed with a maintainer that one
-  should exist.
+- **Broken CI reference**: `.github/workflows/build_client.yml` and
+  `push_trigger.yml` both `cd client && ./gradlew ...`, but no `client/`
+  directory exists in this repo's tracked tree (verified via
+  `git ls-tree -r HEAD`) — they don't match the current layout.
+  `build-android.yml` is the workflow that actually matches (runs
+  `flutter build apk` from repo root after `pigeon.sh`). Don't rely on
+  the other two, and don't "fix" this by inventing a `client/` directory
+  without maintainer confirmation.
 
 ## Development Workflow
 
-- Primary active branch (per `README.md`): `develop`. A `release-1.1.x`
-  branch is also called out as an active developer-release branch. Verify the
-  current default branch with your Git host before branching, since MOSIP
-  repos vary.
-- After cloning, before building: run `flutter pub get`, then `sh pigeon.sh`
-  to generate the Flutter/native bridge code, then set
-  `android/local.properties` with your `flutter.sdk` path.
-- If you add or change files under `pigeon/`, re-run `sh pigeon.sh` and
-  commit only the intended source changes — generated output paths listed in
-  `.gitignore` (`/lib/pigeon/`, the Android Pigeon model package, iOS Pigeon
-  files) should stay untracked.
-- If you add localization strings under `assets/l10n`, run `flutter gen-l10n`
-  before testing UI changes that use them.
-- Styling/theme lives in `lib/utils/app_style.dart` and
-  `lib/utils/app_config.dart`; app label/icon are set in
-  `android/app/src/main/AndroidManifest.xml`.
+- Active branch (per `README.md`): `develop`; `release-1.1.x` is also an
+  active developer-release branch. Verify the default branch yourself —
+  MOSIP repos vary.
+- After cloning: `flutter pub get` → `sh pigeon.sh` → set
+  `android/local.properties`'s `flutter.sdk`.
+- After editing `pigeon/`: re-run `sh pigeon.sh`; commit only source
+  changes — generated paths in `.gitignore` stay untracked.
+- After editing `assets/l10n`: run `flutter gen-l10n` before testing.
+- Styling/theme: `lib/utils/app_style.dart` /`app_config.dart`; app
+  label/icon: `android/app/src/main/AndroidManifest.xml`.
 
 ## Pull Request Guidelines
 
-- Sign off commits (Developer Certificate of Origin) — the `dco-check` job
-  in `.github/workflows/push_trigger.yml` enforces this — it gates the rest
-  of that workflow, which runs as a chain (`codeql` needs `dco-check`,
-  `prebuild` needs `codeql`, `build-apk` needs `prebuild`), so a missing
-  sign-off blocks the whole build; use `git commit -s`.
-- Reference the tracking issue in the PR description/commit body. Note that
-  this repo has no PR-linker workflow of its own — `.github/workflows/`
-  contains only `build_client.yml`, `build-android.yml`, and
-  `push_trigger.yml` — so linking is by convention, not automation here.
-- Follow the general MOSIP contribution guide linked from `README.md`:
+- Sign off commits (`git commit -s`) — `push_trigger.yml`'s
+  `dco-check` job enforces this and gates the rest of that workflow as
+  a chain (`codeql` → `prebuild` → `build-apk`), so a missing sign-off
+  blocks the whole build.
+- Reference the tracking issue in the PR/commit body — this repo has no
+  PR-linker workflow, so linking is by convention, not automation.
+- Follow MOSIP's contribution guide:
   <https://docs.mosip.io/1.2.0/community/code-contributions>.
-- Keep generated files (Pigeon output, Freezed/`*.g.dart` model files) out of
-  PRs unless the PR is specifically about regenerating them — they are
-  git-ignored for a reason.
-- Do not commit `android/local.properties`, `android/key.properties`, or any
-  keystore file. `android/.gitignore` already covers all of these
-  (`/local.properties`, `key.properties`, `**/*.keystore`, `**/*.jks`), so
-  never force-add them past that ignore rule — they are populated only via CI
-  secrets or a developer's own local, private files and must never enter
-  version control.
+- Keep generated files (Pigeon output, Freezed/`*.g.dart`) out of PRs
+  unless the PR is specifically about regenerating them.
+- Never force-add `android/local.properties`, `android/key.properties`,
+  or a keystore past `android/.gitignore`'s rules for them.
 
 ## Repository-Specific Considerations
 
-- This is a hybrid Flutter + native-Android-modules codebase, not a pure
-  native Android app — commands and file layout differ from a typical
-  single-module Gradle Android project. Don't assume a top-level `app/`
-  module; the Flutter embedding lives under `android/app`, alongside sibling
-  native library modules.
-- The `serverBaseURL` and related `BuildConfig` values are sandbox
-  placeholders meant to be overridden per environment at build time (via
-  workflow inputs / secrets), not values to be permanently changed in
-  `android/build.gradle`.
-- `build_client.yml` and `push_trigger.yml` reference a `client/` directory
-  that is not present in this repo's tracked tree (see Project Structure
-  Notes above) — treat any instructions or automation based on those two
-  workflows with caution until that mismatch is resolved upstream.
-- **`android/build.gradle` has what looks like a real, committed
-  SonarCloud token** (`sonar.login`) — see
-  [`android/AGENTS.md`](android/AGENTS.md) for detail. Treat it as
-  compromised (public repo); don't add another real token anywhere in
-  this repo following that pattern.
-- The Mock MDS (Mock Device Service) app, used to simulate biometric
-  hardware for testing, is a separate MOSIP project
-  (`mosip/android-camera-mds`) — see `README.md`'s "Set up Mock MDS for
-  Biometric Scan" section for setup steps; it is not part of this
-  repository's build.
+- Hybrid Flutter + native-Android-modules codebase, not a pure native
+  Android app — don't assume a top-level `app/` module; the Flutter
+  embedding lives under `android/app` alongside sibling native modules.
+- Mock MDS (Mock Device Service, for simulating biometric hardware in
+  tests) is a separate project (`mosip/android-camera-mds`) — see
+  `README.md`'s "Set up Mock MDS for Biometric Scan" section; it's not
+  part of this repo's build.
 
 ## Agent rules
 
 ### Do
 
-1. Run `flutter pub get` and `sh pigeon.sh` before attempting any build, and
-   re-run `sh pigeon.sh` after editing anything under `pigeon/`.
-2. Keep `serverBaseURL`, `debugPassword`, and Sonar properties in
-   `android/build.gradle` as placeholders; override them only through the
-   documented CI inputs/secrets, never by hardcoding a real value into a
-   tracked file.
-3. Verify claims about CI behavior against the actual workflow YAML in
-   `.github/workflows/` and the actual tracked file tree (`git ls-tree`)
-   before describing or relying on a workflow — this repo has at least one
-   workflow (`build_client.yml`/`push_trigger.yml`) that references a path
-   not present in the tree.
-4. Point automation-related questions to `ui-test/README.md` rather than
-   duplicating or contradicting it.
-5. Keep Pigeon-generated files, Freezed/`*.g.dart` model files, and other
-   git-ignored generated output out of commits and PRs.
+1. Run `flutter pub get` + `sh pigeon.sh` before any build; re-run
+   `pigeon.sh` after editing `pigeon/`.
+2. Keep `serverBaseURL`, `debugPassword`, and Sonar properties as
+   placeholders — override only via documented CI inputs/secrets.
+3. Verify CI-behavior claims against the actual workflow YAML and
+   `git ls-tree` before relying on a workflow — `build_client.yml`/
+   `push_trigger.yml` reference a path that doesn't exist here.
+4. Point automation questions to `ui-test/README.md`, don't duplicate it.
+5. Keep git-ignored generated output (Pigeon, Freezed/`*.g.dart`) out of
+   commits and PRs.
 
 ### Do not
 
-1. Do not commit `android/local.properties`, `android/key.properties`, any
-   `.jks`/keystore file, or a real Sonar/API token into any tracked file.
-2. Do not invent or assume a `client/` directory to make `build_client.yml`
-   or `push_trigger.yml` "work" — confirm with a maintainer first if that
-   mismatch needs fixing.
-3. Do not treat `https://api-internal.sandbox.xyz.net` in
-   `android/build.gradle` as a stable, real backend to build integrations
-   against — it is a MOSIP sandbox/placeholder host, overridden per
-   environment at build time.
-4. Do not skip DCO sign-off on commits — CI enforces it.
+1. Commit `android/local.properties`, `android/key.properties`, any
+   keystore, or a real Sonar/API token into a tracked file.
+2. Invent a `client/` directory to make `build_client.yml`/
+   `push_trigger.yml` "work" — confirm with a maintainer first.
+3. Treat `api-internal.sandbox.xyz.net` as a stable real backend — it's
+   a sandbox placeholder, overridden per environment at build time.
+4. Skip DCO sign-off — CI enforces it.

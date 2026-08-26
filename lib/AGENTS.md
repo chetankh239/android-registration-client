@@ -34,34 +34,26 @@ location differs from what the root file currently says.
 
 ## `main.dart` / `app_router.dart`
 
-- **State management**: the `provider` package (`provider: ^6.0.5`).
-  `RegistrationClientApp` wraps the app in a `MultiProvider` with 6
-  eager (`lazy: false`) `ChangeNotifierProvider`s: `ConnectivityProvider`,
-  `GlobalProvider`, `SyncProvider`, `RegistrationTaskProvider`,
-  `AuthProvider`, `ApprovePacketsProvider`.
-- `main()` also sets up a native→Dart `MethodChannel`
+- **State management**: `provider: ^6.0.5`. `RegistrationClientApp` wraps
+  the app in a `MultiProvider` with 6 eager `ChangeNotifierProvider`s:
+  `ConnectivityProvider`, `GlobalProvider`, `SyncProvider`,
+  `RegistrationTaskProvider`, `AuthProvider`, `ApprovePacketsProvider`.
+- `main()` sets up a native→Dart `MethodChannel`
   (`io.mosip.registration_client/sync_restart`) for a sync-complete
   restart dialog, loads env via `flutter_config`, and wraps the app in
-  `RestartWidget` (rebuilds the widget subtree with a new `UniqueKey()`
-  for a soft restart, paired with the `restart_app` package for a hard
-  native restart).
-- `BuildApp` builds the actual `MaterialApp`: `routes: AppRouter.routes`,
-  localization delegates/supported locales from generated
-  `AppLocalizations`, `ScreenUtil.init` for responsive scaling (separate
-  design sizes for portrait phone/tablet vs. landscape), and wraps
-  everything in a custom `InactivityTracker` (auto-logout; idle/grace
-  duration fetched from the server via `AuthProvider.getIdleTime()`/
-  `getRefreshedLoginTime()`).
-- **Routing**: `AppRouter` (`app_router.dart`) is a plain static
-  `Map<String, Widget Function(BuildContext)>` consumed by
-  `MaterialApp.routes` — there is no router package (no `go_router`).
-  Only 6 named routes are registered: `LoginPage.route`, `/new_process`,
-  `/update_process`, `/lost_process`, `/correction_process` (all four
-  process routes dispatch to the same `GenericProcess` widget
-  parameterized by a `ProcessType` enum), `OnboardLandingPage.route`,
-  `HomePage.route`. Most other in-app navigation happens via direct
-  `Navigator.push(MaterialPageRoute(...))` rather than named routes —
-  don't assume every screen has an entry in `app_router.dart`.
+  `RestartWidget` (soft restart via new `UniqueKey()`; hard restart via
+  the `restart_app` package).
+- `BuildApp` builds `MaterialApp`: `routes: AppRouter.routes`,
+  localization from generated `AppLocalizations`, `ScreenUtil.init` for
+  responsive scaling, wrapped in `InactivityTracker` (auto-logout; idle
+  time from `AuthProvider.getIdleTime()`/`getRefreshedLoginTime()`).
+- **Routing**: `AppRouter` is a plain static
+  `Map<String, Widget Function(BuildContext)>` — no router package. Only
+  6 named routes exist (`LoginPage.route`, 4 process routes dispatching
+  to `GenericProcess` via a `ProcessType` enum, `OnboardLandingPage.route`,
+  `HomePage.route`); most navigation is direct
+  `Navigator.push(MaterialPageRoute(...))` — don't assume every screen
+  has an `app_router.dart` entry.
 
 ## `model/`
 
@@ -113,12 +105,11 @@ class AuthServiceImpl implements AuthService {
 AuthService getAuthServiceImpl() => AuthServiceImpl();
 ```
 
-Consumers (providers, UI) instantiate the interface type (`AuthService()`)
-and the factory hardwires to the Android impl. **There is currently no
-other platform implementation** — no `platform_ios/`, despite `ios/`,
-`windows/`, `linux/`, `macos/`, `web/` Flutter platform folders existing
-at the repo root. Don't assume cross-platform support exists at the
-Dart layer just because those folders are present.
+Consumers instantiate the interface type (`AuthService()`) and the
+factory hardwires to the Android impl. **No other platform
+implementation exists** (no `platform_ios/`) despite `ios/`, `windows/`,
+`linux/`, `macos/`, `web/` folders existing at the repo root — don't
+assume cross-platform support at the Dart layer.
 
 ## `provider/`
 
@@ -159,12 +150,11 @@ ui/
 └── widgets/                              9 shared widgets (sync dialog, language/network/password/username, remap dialogs)
 ```
 
-A recurring pattern is a mobile-vs-tablet split (`dashboard_mobile.dart`/
-`dashboard_tablet.dart`, `widgets/` vs. `widgets_mobile/` under
-`process_ui/`, `portrait/` under `onboard/`), tied into the
-`ScreenUtil`/responsive setup in `main.dart` and `utils/responsive.dart`
-— when adding a new screen, check whether it needs a mobile/tablet or
-portrait/landscape variant following the existing pattern nearby.
+Recurring pattern: mobile-vs-tablet split (`dashboard_mobile.dart`/
+`dashboard_tablet.dart`, `widgets/` vs `widgets_mobile/` under
+`process_ui/`, `portrait/` under `onboard/`), tied to `ScreenUtil`/
+`utils/responsive.dart` — check whether a new screen needs a
+mobile/tablet or portrait/landscape variant.
 
 ## `utils/`
 
@@ -186,12 +176,11 @@ portrait/landscape variant following the existing pattern nearby.
 
 ## `pigeon/` (generated output)
 
-Gitignored (`.gitignore`: `/lib/pigeon/`) — does not exist until
-`sh pigeon.sh` runs (see root `AGENTS.md`). Source message definitions
-live in `../pigeon/` at the repo root (17 files). Every file under
-`platform_spi/`/`platform_android/`/`provider/` that talks to native
-code imports from `package:registration_client/pigeon/*.dart` — the app
-will not compile/analyze until Pigeon codegen has run at least once.
+Gitignored (`/lib/pigeon/`) — does not exist until `sh pigeon.sh` runs
+(see root `AGENTS.md`). Source defs live in `../pigeon/` (17 files).
+Every `platform_spi`/`platform_android`/`provider` file that talks to
+native code imports `package:registration_client/pigeon/*.dart` — the
+app won't compile/analyze until codegen has run once.
 
 ## Configuration
 

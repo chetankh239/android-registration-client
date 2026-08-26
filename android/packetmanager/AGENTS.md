@@ -58,9 +58,8 @@ No module-level README.
   `util/PacketKeeper.java`, `util/ObjectStoreUtil.java`,
   `util/StorageUtils.java`.
 
-**No Pigeon references anywhere in this module.** Pigeon `HostApi`
-implementations live in `android/app`'s `api_services/` — see
-`../AGENTS.md`.
+No Pigeon references in this module — `HostApi` impls live in
+`android/app`'s `api_services/` (see `../AGENTS.md`).
 
 ## Build & Test Commands
 
