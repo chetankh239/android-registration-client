@@ -167,7 +167,6 @@ void main() {
               onChanged: (v) {},
               onTapBack: () {},
               onTapLogin: () {},
-              onTapForgotPassword: () {},
               isDisabled: false,
               isLoggingIn: false,
               isMobile: true,
