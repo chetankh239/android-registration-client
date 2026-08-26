@@ -20,11 +20,10 @@ transliteration). Flutter talks to these modules through generated
 ## Technology Stack
 
 - **App/UI**: Flutter/Dart, `pubspec.yaml` pins `sdk: ">=2.19.6 <3.0.0"`,
-  Flutter SDK `3.10.4` per `README.md`. Confirmed by installing Flutter
-  3.10.4: it ships Dart **3.0.3**, above that `<3.0.0` bound —
-  `flutter pub get` refuses to resolve dependencies against that SDK
-  version until the upper bound is raised. Pre-existing repo
-  inconsistency, not a typo here.
+  Flutter SDK `3.10.4` per `README.md`. Flutter 3.10.x ships Dart 3.0.x,
+  above that `<3.0.0` bound — a pre-existing repo inconsistency, not a
+  typo here. Use a Dart-2-era Flutter SDK to satisfy the constraint, or
+  expect to raise it if installing 3.10.4.
 - **Native Android modules**: Kotlin/Java, Gradle (AGP `8.3.2`, Kotlin
   `1.9.24`, `compileSdkVersion`/`targetSdkVersion` 34, `minSdkVersion`
   28) — see `android/build.gradle` and `android/app/build.gradle`.
@@ -45,18 +44,7 @@ sh pigeon.sh                       # regenerate Pigeon bridge + Dart models
                                     #   (required after cloning and whenever pigeon/ changes)
 flutter gen-l10n                   # regenerate l10n after editing assets/l10n (per l10n.yaml, not lib/l10n)
 flutter run                        # run on a connected device/emulator
-flutter test                       # Dart unit/widget tests — currently fails
-                                    #   to compile: test/widget_test.dart's
-                                    #   "Password Component" case doesn't pass
-                                    #   PasswordComponent's required
-                                    #   onTapForgotPassword param. Once that's
-                                    #   fixed, 4 more widget-count assertions
-                                    #   also fail (Login Page, Username
-                                    #   Component, Password Component, Machine
-                                    #   Keys — each expects one more widget
-                                    #   than actually renders). Unit tests
-                                    #   (login_test.dart,
-                                    #   machine_details_test.dart) pass fine.
+flutter test                       # Dart unit/widget tests (widget_test.dart currently fails to compile)
 flutter build apk --debug          # debug APK
 flutter build apk --release        # release APK
 (cd android && ./gradlew assembleDebug)   # native Android modules only
@@ -93,22 +81,19 @@ cd target && java -jar uitest-regclient-1.0.1.jar   # run tests
   build time from the `JKS_PRIVATE_SECRET`/`KEY_PROPERTIES` secrets into
   `android/app/arc-local-keystore.jks` and `android/key.properties`.
   Locally, create your own dev keystore and never commit it.
-- **Committed secrets (unresolved)**: `android/build.gradle`'s
-  `sonarqube {}` block has a real, live-looking `sonar.login` token and
-  a contributor's personal Windows path in
-  `sonar.coverage.jacoco.xmlReportPaths`; it also sets a real
-  `debugPassword` (consumed by `android/clientmanager/build.gradle`'s
-  `DEBUG_PASSWORD` field — only seeds the debug-build local Room/
-  SQLCipher DB key, not used for anything external). The same
-  `sonar.login` token is also hardcoded a second time in
-  `android/app/build.gradle`'s own `sonar {}` block. Both are committed
-  secrets in a public repo — treat as compromised, do not extend the
-  pattern. CI's only token substitution (`build_client.yml` `sed`s
-  `sqp_19c9702e…` in `*gradle.properties`) does **not** cover either of
-  these — that pattern doesn't exist in the tree. See
-  `android/AGENTS.md` — removing them requires a maintainer/
-  deployment-owner decision (CI secret vs. local file), not a drive-by
-  fix.
+- **Committed secrets (unresolved)**: `android/build.gradle`'s and
+  `android/app/build.gradle`'s `sonarqube`/`sonar` blocks each hardcode
+  the same real, live-looking `sonar.login` token; `android/build.gradle`
+  also sets a real `debugPassword` (consumed by
+  `android/clientmanager/build.gradle`'s `DEBUG_PASSWORD` field) and a
+  contributor's personal Windows path in
+  `sonar.coverage.jacoco.xmlReportPaths`. All are committed secrets in a
+  public repo — treat as compromised, do not extend the pattern. CI's
+  only token substitution (`build_client.yml` `sed`s `sqp_19c9702e…` in
+  `*gradle.properties`) does **not** cover any of these — that pattern
+  doesn't exist in the tree. See `android/AGENTS.md` — removing them
+  requires a maintainer/deployment-owner decision (CI secret vs. local
+  file), not a drive-by fix.
 
 ## Project Structure Notes
 
@@ -116,12 +101,7 @@ cd target && java -jar uitest-regclient-1.0.1.jar   # run tests
 - `pigeon/` / `pigeon.sh` — Pigeon defs + codegen script producing
   `lib/pigeon/*.dart` and Java classes under
   `android/app/src/main/java/io/mosip/registration_client/model/`.
-  Ran `sh pigeon.sh` end-to-end (Flutter 3.10.4) — works, generates all
-  18 pigeon files. Generated output is git-ignored — always
-  regenerate, never hand-edit — **except** `ios/Runner/pigeon.h`/
-  `pigeon.m`: `.gitignore` lists both, but they're still tracked
-  (committed before that rule existed), so regenerating them produces
-  a real diff you'll need to commit or discard.
+  Generated output is git-ignored — always regenerate, never hand-edit.
 - `android/` — Flutter Android embedding + native modules (`app`,
   `clientmanager`, `keymanager`, `packetmanager`,
   `transliterationmanager`, per `android/settings.gradle`) — see
