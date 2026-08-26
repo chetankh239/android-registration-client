@@ -44,8 +44,9 @@ sh pigeon.sh                       # regenerate Pigeon bridge + Dart models
                                     #   (required after cloning and whenever pigeon/ changes)
 flutter gen-l10n                   # regenerate l10n after editing assets/l10n (per l10n.yaml, not lib/l10n)
 flutter run                        # run on a connected device/emulator
-flutter test                       # Dart unit/widget tests (widget_test.dart currently fails to compile)
-flutter build apk --debug          # debug APK
+flutter build apk --debug          # debug APK — can fail with D8 OutOfMemoryError
+                                    #   during dex merge; android/gradle.properties'
+                                    #   org.gradle.jvmargs=-Xmx1536M may be too low
 flutter build apk --release        # release APK
 (cd android && ./gradlew assembleDebug)   # native Android modules only
 ```
