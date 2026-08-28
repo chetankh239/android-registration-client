@@ -13,6 +13,8 @@ import io.appium.java_client.remote.SupportsContextSwitching;
 import io.appium.java_client.remote.SupportsRotation;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import io.mosip.testrig.apirig.testrunner.OTPListener;
+import regclient.api.FetchUiSpec;
 import regclient.pages.english.BiometricDetailsPageEnglish;
 import regclient.utils.TestDataReader;
 
@@ -60,6 +62,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class BasePage {
 	protected AppiumDriver driver;
@@ -261,8 +264,7 @@ public class BasePage {
 
 	protected boolean isElementDisplayedOnScreen(WebElement element) {
 		try {
-			element.isDisplayed();
-			return true;
+			return element.isDisplayed();
 		} catch (Exception e) {
 			return false;
 		}
@@ -1045,6 +1047,39 @@ public class BasePage {
 		}
 
 		throw new NoSuchElementException("Element not visible after horizontal scrolling");
+	}
+
+	// Shared by ApplicantBiometricsPage*/BiometricDetailsPage* isXxxDisplayedForCorrection() checks across all
+	// locales: the spec label may be null/empty/contain regex metacharacters, so it's guarded and quoted, with
+	// fallbackLabel offered as an alternate match.
+	protected boolean isDisplayedForCorrectionByLabel(String specId, String fallbackLabel) {
+		String label = FetchUiSpec.getValueUsingId(specId);
+		String pattern = (label == null || label.trim().isEmpty()) ? Pattern.quote(fallbackLabel)
+				: Pattern.quote(label) + "|" + Pattern.quote(fallbackLabel);
+		return isElementDisplayed(findElementWithRetry(MobileBy.AndroidUIAutomator(
+				"new UiScrollable(new UiSelector().scrollable(true).instance(0)).scrollIntoView(new UiSelector().descriptionMatches(\".*("
+						+ pattern + ").*\"))")));
+	}
+
+	// Sentinel returned by OTPListener.getAdditionalReqId while packet creation hasn't produced an id yet.
+	protected static final String Additional_Req_Id_Failed = "{Failed}";
+
+	protected static String waitForAdditionalReqId(String emailId, int maxOuterAttempts, int waitSecondsBetweenAttempts) {
+		String additionalInfoReqId = "";
+		for (int attempt = 1; attempt <= maxOuterAttempts; attempt++) {
+			additionalInfoReqId = OTPListener.getAdditionalReqId(emailId);
+			if (additionalInfoReqId != null && !additionalInfoReqId.trim().isEmpty()
+					&& !additionalInfoReqId.equals(Additional_Req_Id_Failed)) {
+				return additionalInfoReqId;
+			}
+			logger.info("AdditionalInfoRequestId not ready for {}, attempt {}/{}. Retrying...", emailId, attempt,
+					maxOuterAttempts);
+			if (attempt < maxOuterAttempts) {
+				waitTime(waitSecondsBetweenAttempts);
+			}
+		}
+		throw new IllegalStateException(
+				"AdditionalInfoRequestId not available for " + emailId + " after " + maxOuterAttempts + " attempts");
 	}
 
 }

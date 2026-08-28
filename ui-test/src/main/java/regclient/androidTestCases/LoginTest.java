@@ -3,6 +3,9 @@ package regclient.androidTestCases;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import org.openqa.selenium.WebDriverException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import regclient.BaseTest.AndroidBaseTest;
@@ -71,6 +74,8 @@ import regclient.utils.TestDataReader;
 
 @Test
 public class LoginTest extends AndroidBaseTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(LoginTest.class);
 
 	@Test(priority = 0, description = "Verify user login with valid credentials")
 	public void userloginTest() {
@@ -497,7 +502,12 @@ public class LoginTest extends AndroidBaseTest {
 		boolean isDismissLoaded = false;
 
 		for (int i = 0; i < 3; i++) {
-			supervisorBiometricVerificationpage.clickOnVerifyAndSaveButton();
+			try {
+				supervisorBiometricVerificationpage.clickOnVerifyAndSaveButton();
+			} catch (WebDriverException e) {
+				logger.warn("Attempt {} to click Verify & Save failed", i + 1, e);
+				continue;
+			}
 
 			if (supervisorBiometricVerificationpage.isDismissPageLoaded()) {
 				isDismissLoaded = true;

@@ -281,4 +281,8 @@ public class ApplicantBiometricsPageEnglish extends ApplicantBiometricsPage {
 		String count = attemptText.replaceAll("\\D+", "");
 		return Integer.parseInt(count);
 	}
+
+	public boolean isApplicantBiometricsPageDisplayedForCorrection() {
+		return isDisplayedForCorrectionByLabel("individualBiometrics", "Applicant Biometrics");
+	}
 }

@@ -1,7 +1,6 @@
 package regclient.pages.french;
 
 import java.time.Duration;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -13,7 +12,6 @@ import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.MobileBy;
 import io.appium.java_client.pagefactory.AndroidFindBy;
 import io.appium.java_client.remote.SupportsContextSwitching;
-import io.mosip.testrig.apirig.testrunner.OTPListener;
 import regclient.api.FetchUiSpec;
 import regclient.page.ApplicantBiometricsPage;
 import regclient.page.BiometricDetailsPage;
@@ -171,11 +169,7 @@ public class BiometricDetailsPageFrench extends BiometricDetailsPage {
 
 	public void enterAdditionalInfoUsingEmail(String emailId) {
 		logger.info(emailId);
-		String additionalInfoReqId = OTPListener.getAdditionalReqId(emailId);
-		if (additionalInfoReqId == null || additionalInfoReqId.trim().isEmpty()) {
-			throw new IllegalStateException("Additional Info Request ID is missing for email: " + emailId);
-		}
-		additionalInfoReqId = additionalInfoReqId + "-BIOMETRIC_CORRECTION-1";
+		String additionalInfoReqId = waitForAdditionalReqId(emailId, 20, 10) + "-BIOMETRIC_CORRECTION-1";
 
 		try {
 			if (typeAndVerify(additionalInfoRequestIdTextbox, additionalInfoReqId)) {
@@ -188,6 +182,10 @@ public class BiometricDetailsPageFrench extends BiometricDetailsPage {
 			throw new AssertionError("Failed while typing/verifying finalId: " + additionalInfoReqId, e);
 		}
 
+	}
+
+	public boolean isBiometricDetailsPageDisplayedForCorrection() {
+		return isDisplayedForCorrectionByLabel("individualBiometrics", "Applicant Biometrics");
 	}
 
 	private boolean typeAndVerify(WebElement el, String value) {

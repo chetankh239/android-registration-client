@@ -291,4 +291,9 @@ public class ApplicantBiometricsPageArabic extends ApplicantBiometricsPage {
 		return Integer.parseInt(count);
 	}
 
+	@SuppressWarnings("deprecation")
+	public boolean isApplicantBiometricsPageDisplayedForCorrection() {
+		return isDisplayedForCorrectionByLabel("individualBiometrics", "Applicant Biometrics");
+	}
+
 }
